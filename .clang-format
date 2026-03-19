@@ -1,0 +1,23 @@
+BasedOnStyle: Google
+TabWidth: 4
+IndentWidth: 4
+ColumnLimit: 120
+UseTab: Never
+AllowShortFunctionsOnASingleLine: Empty
+IndentPPDirectives: AfterHash
+SortIncludes: true
+FixNamespaceComments: true
+InsertBraces: true
+QualifierAlignment: Left
+PointerAlignment: Right
+ReferenceAlignment: Right
+SortUsingDeclarations: LexicographicNumeric
+InsertNewlineAtEOF: true
+LambdaBodyIndentation: OuterScope
+MaxEmptyLinesToKeep: 1
+EnumTrailingComma: Insert
+KeepEmptyLines:
+  AtStartOfFile: false
+  AtStartOfBlock: false
+  AtEndOfFile: false
+LineEnding: LF
