@@ -3,7 +3,9 @@
 #include <ncurses.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 
+#include "../headers/objects.h"
 static void init_ncurses() {
     initscr();
     cbreak();
@@ -19,32 +21,43 @@ static void init_ncurses() {
 
 int main() {
     init_ncurses();
-    int input;
+    int input = -1;
     window main_window;
+    int identificators[MAX_OBJECTS_AMOUNT] = {-1};
+    BOX boxes[MAX_OBJECTS_AMOUNT] = {0};
+    TEXTBOX textboxes[MAX_OBJECTS_AMOUNT] = {0};
     getmaxyx(stdscr, main_window.height, main_window.width);
+
+    boxes[0] = init_box(generate_id(identificators));
+    textboxes[0] = init_textbox(generate_id(identificators));
     WINDOW *win = newwin(main_window.height, main_window.width, 0, 0);
-    bool need_redraw = true;
-    int last_h = main_window.height;
-    int last_w = main_window.width;
     while ((input = getch()) != 27) {
         resize_term(0, 0);
         getmaxyx(stdscr, main_window.height, main_window.width);
-        if (main_window.height != last_h || main_window.width != last_w || input == KEY_F(11) || input == KEY_RESIZE) {
-            need_redraw = true;
-        }
+        wresize(win, main_window.height, main_window.width);
+        werase(win);
 
-        if (need_redraw) {
-            wresize(win, main_window.height, main_window.width);
-            last_h = main_window.height;
-            last_w = main_window.width;
-            werase(win);
+        char *text = "%d width | %d height";
+        mvwprintw(win, main_window.height - 2, (main_window.width - strlen(text)) / 2, text, main_window.width,
+                  main_window.height);
 
-            mvwprintw(win, 3, 3, "Now its %d rows and %d columns", main_window.height, main_window.width);
-            box(win, 0, 0);
-            wrefresh(win);
-            need_redraw = false;
-        }
+        move_box(&boxes[0], main_window.width / 3, main_window.height / 3);
+        draw_box(win, boxes[0]);
+        move_box(&textboxes[0].box, main_window.width / 5, main_window.height / 5);
+        draw_textbox(win, textboxes[0]);
+        char *text1 = "box: id: %d | x: %d | y: %d | width: %d | height: %d";
+        mvwprintw(win, main_window.height / 2 + 1, (main_window.width - strlen(text1)) / 2, text1, boxes[0].id,
+                  boxes[0].anchor.x, boxes[0].anchor.y, boxes[0].width, boxes[0].height);
+
+        char *text2 = "textbox: id: %d | text: %s";
+        mvwprintw(win, main_window.height / 2 + 2, (main_window.width - strlen(text1)) / 2, text2, textboxes[0].box.id,
+                  textboxes[0].text);
+
+        box(win, 0, 0);
+        wrefresh(win);
+        napms(10);
     }
+
     clear();
     delwin(win);
     endwin();
