@@ -8,9 +8,11 @@ int generate_id(int *arr) {
     int size = sizeof(&arr) / sizeof(arr[0]);
     qsort(arr, size, sizeof(int), compare);
     int id = 0;
-    for (int i = 0; i < size && id == arr[i]; i++) {
+    int i = 0;
+    for (; i < size && id == arr[i]; i++) {
         id++;
     }
+    arr[i] = id;
     return id;
 }
 
@@ -53,10 +55,17 @@ void draw_box(WINDOW *win, BOX box) {
     mvwprintw(win, y + height, x + width, "+");
 }
 
+// static void malloc_for_text(char* text){
+
+// }
+
 TEXTBOX init_textbox(int id, char *text) {
     TEXTBOX textbox;
     textbox.box = init_box(id);
-    strcpy(textbox.text, DEFAULT_TEXT);
+    if (text == NULL) {
+        text = DEFAULT_TEXT;
+    }
+    strcpy(textbox.text, text);
     return textbox;
 }
 
@@ -68,11 +77,18 @@ static void draw_text(WINDOW *win, BOX box, char *text) {
 
     int row = 0;
     int column = 0;
-    for (int i = y; i < y + h; i++) {
+
+    int flag = 0;
+    for (int i = y; !flag && i < y + h; i++) {
         column = 0;
-        for (int j = x; j < x + w; j++) {
-            mvwaddch(win, i, j, text[row * w + column]);
-            column++;
+        for (int j = x; !flag && j < x + w; j++) {
+            char c = text[row * w + column];
+            if (c == '\0') {
+                flag = 1;
+            } else {
+                mvwaddch(win, i, j, c);
+                column++;
+            }
         }
         row++;
     }

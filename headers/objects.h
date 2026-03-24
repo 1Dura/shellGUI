@@ -41,13 +41,13 @@ typedef struct {
 /* BUTTON */
 
 /* TEXTBOX */
-#define DEFAULT_TEXT "yoo bro 1234"
+#define DEFAULT_TEXT "ERR /NO TEXT/"
 typedef struct {
     char text[MAX_TEXT_SIZE];
     BOX box;
 } TEXTBOX;
 
-TEXTBOX init_textbox(int id);
+TEXTBOX init_textbox(int id, char *text);
 void draw_textbox(WINDOW *win, TEXTBOX textbox);
 /* TEXTBOX */
 
