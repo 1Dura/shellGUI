@@ -1,13 +1,14 @@
 CFLAGS = -Wall -Wextra -Werror -std=c11
 
-SRC = src/*.c
+MAIN = src/window.c
+OBJECTS = src/objects/*.c
 
 TARGETS = launch test
 
 all: $(TARGETS)
 
 launch:
-	gcc $(CFLAGS) $(SRC) -lncurses
+	gcc $(CFLAGS) $(MAIN) $(OBJECTS) -lncurses
 	./a.out
 
 test:

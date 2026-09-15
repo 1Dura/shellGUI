@@ -6,57 +6,86 @@
 #include <string.h>
 
 #include "../headers/objects.h"
+
 static void init_ncurses() {
     initscr();
     cbreak();
     noecho();
     curs_set(0);
-    keypad(stdscr, TRUE);   // включает специальные клавиши (стрелки и т.д)
-    nodelay(stdscr, TRUE);  // чтобы getch был неблокирующим
-    timeout(3);             // ограничение на частоту опроса ввода, чтобы не лагало
+    keypad(stdscr, TRUE);    // включает специальные клавиши (стрелки и т.д) и
+                             // регистрирует нажатия мыши правильно
+    nodelay(stdscr, FALSE);  // чтобы getch был неблокирующим
+    timeout(16);  // ограничение на частоту опроса ввода, чтобы не лагало
     mousemask(ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION,
-              NULL);          // включение маски мыши
+              NULL);  // включение маски мыши (наблюдаем за всеми ивентами мыши)
     printf("\033[?1003h\n");  // включает режим движения мыши
+    mouseinterval(50);        // время ожидания для подтверждения двойного клика
 }
 
-static void show_info(WINDOW *win, window main_window, BOX *boxes, TEXTBOX *textboxes) {
-    char *text = "%d width | %d height";
-    mvwprintw(win, main_window.height - 2, (main_window.width - strlen(text)) / 2, text, main_window.width,
-              main_window.height);
-    char *text1 = "box: id: %d | x: %d | y: %d | width: %d | height: %d";
-    mvwprintw(win, 1, (main_window.width - strlen(text1)) / 2, text1, boxes[0].id, boxes[0].anchor.x, boxes[0].anchor.y,
-              boxes[0].width, boxes[0].height);
+static void show_info(WINDOW *win, window main_window, int cx, int cy,
+                      int pressed) {
+    char *text = "%d width | %d height | x: %d y: %d | pressed: %d";
+    mvwprintw(win, main_window.height - 2,
+              (main_window.width - strlen(text)) / 2, text, main_window.width,
+              main_window.height, cx, cy, pressed);
+}
 
-    char *text2 = "textbox: id: %d | text: %s";
-    mvwprintw(win, 2, (main_window.width - strlen(text2)) / 2, text2, textboxes[0].box.id, textboxes[0].text);
+static int button1_down(mmask_t bstate) {
+    // явное нажатие
+    if (bstate & (BUTTON1_PRESSED | BUTTON1_CLICKED | BUTTON1_DOUBLE_CLICKED |
+                  BUTTON1_TRIPLE_CLICKED)) {
+        return 1;
+    }
+
+    // явное отпускание
+    if (bstate & BUTTON1_RELEASED) {
+        return 0;
+    }
+
+    return -1;  // «не знаю» — состояние не изменилось
 }
 
 int main() {
     init_ncurses();
     int input = -1;
     window main_window;
-    int identificators[MAX_OBJECTS_AMOUNT] = {-1};
-    BOX boxes[MAX_OBJECTS_AMOUNT] = {0};
-    TEXTBOX textboxes[MAX_OBJECTS_AMOUNT] = {0};
     getmaxyx(stdscr, main_window.height, main_window.width);
 
-    boxes[0] = init_box(generate_id(identificators));
-    textboxes[0] = init_textbox(generate_id(identificators), NULL);
     WINDOW *win = newwin(main_window.height, main_window.width, 0, 0);
-    while ((input = getch()) != 27) {
+    nodelay(win, TRUE);
+    MEVENT event;
+    int pressed = -1;
+    // POINT cursor;  // необходимо для сохранения данных о позиции курсора,
+    // иначе
+    //                // event.x/y слетает на ноль
+
+    while ((input = wgetch(stdscr)) != 27) {
+        if (input == KEY_MOUSE) {
+            getmouse(&event);
+            int flag = button1_down(event.bstate);
+            if (flag != -1) {
+                pressed = flag;
+            }
+        }
+
+        // if (event.bstate & BUTTON1_PRESSED) {
+        //     pressed = 1;
+        // }
+        // if (event.bstate & BUTTON1_RELEASED) {
+        //     pressed = 0;
+        // }
+
         resize_term(0, 0);
         getmaxyx(stdscr, main_window.height, main_window.width);
         wresize(win, main_window.height, main_window.width);
         werase(win);
-        show_info(win, main_window, boxes, textboxes);
-        move_box(&boxes[0], main_window.width / 3, main_window.height / 3);
-        draw_box(win, boxes[0]);
-        move_box(&textboxes[0].box, main_window.width / 5, main_window.height / 5);
-        draw_textbox(win, textboxes[0]);
+        // show_info(win, main_window, cursor.x, cursor.y, pressed);
+        show_info(win, main_window, event.x, event.y, pressed);
 
         box(win, 0, 0);
         wrefresh(win);
-        napms(10);
+
+        // napms(1);
     }
 
     clear();
